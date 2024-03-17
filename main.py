@@ -34,12 +34,18 @@ def nettoyage_image(img):
     return empty
 
 
+def extraire_couleurs(img):
+    pass
+    # TODO
+
+
 def main():
     img = im3.imread('images/image.png')
     imshow(img)
     show()
     imshow(nettoyage_image(img))
     show()
+    # TODO
 
 
 main()
