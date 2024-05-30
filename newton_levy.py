@@ -20,24 +20,24 @@ def eclairement_visible(dif_marche):
 
 def eclairement_bleu(dif_marche):
     """On intègre désormais sur la longueur d'onde correspondant au bleu."""
-    return integrate.quad(lambda l: eclairement(dif_marche, l), BLEU[0], BLEU[1], )[0]
+    return integrate.quad(lambda l: eclairement(dif_marche, l), BLEU[0], BLEU[1])[0]
 
 
 def eclairement_vert(dif_marche):
-    """On intègre désormais sur la longueur d'onde correspondant au bleu."""
+    """On intègre désormais sur la longueur d'onde correspondant au vert."""
     return integrate.quad(lambda l: eclairement(dif_marche, l), VERT[0], VERT[1])[0]
 
 
 def eclairement_rouge(dif_marche):
-    """On intègre désormais sur la longueur d'onde correspondant au bleu."""
+    """On intègre désormais sur la longueur d'onde correspondant au rouge."""
     return integrate.quad(lambda l: eclairement(dif_marche, l), ROUGE[0], ROUGE[1])[0]
 
 
 def rgb(dif_marche):
     total = eclairement_visible(dif_marche)
-    (r, g, b) = (eclairement_rouge(dif_marche)/total,
-                 eclairement_vert(dif_marche)/total,
-                 eclairement_bleu(dif_marche)/total)
+    (r, g, b) = (eclairement_rouge(dif_marche) / total,
+                 eclairement_vert(dif_marche) / total,
+                 eclairement_bleu(dif_marche) / total)
     return r, g, b
 
 
@@ -46,7 +46,7 @@ def plot(epaisseur_max=0.000005, n=300):
     for i in range(1, n):
         dif_marche = i * epaisseur_max / n
         couleurs.append(rgb(dif_marche))
-        plt.plot(range(1, n), [dif_marche for i in range(1, n)], color=rgb(dif_marche))
+        plt.plot(range(1, n), [dif_marche for _ in range(1, n)], color=rgb(dif_marche))
 
     plt.title("Echelle des teintes de Newton")
     plt.ylabel("Différence de marche (m)")
@@ -55,5 +55,15 @@ def plot(epaisseur_max=0.000005, n=300):
     plt.show()
 
 
-def couleur():
-    pass
+def couleur(epaisseur, n=1000) -> dict:
+    color = dict()
+    vu = dict()
+    for i in range(1, n):
+        dif_marche = i * epaisseur / n
+        c = rgb(dif_marche)
+        if c in vu.keys():
+            vu[c] += 1
+        else:
+            vu[c] = 1
+        color[(c, vu[c])] = dif_marche
+    return color

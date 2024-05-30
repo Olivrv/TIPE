@@ -1,6 +1,8 @@
 import imageio.v3 as im3
 from matplotlib.pyplot import imshow, show
 from PIL import Image
+import cv2
+from newton_levy import couleur
 
 BLACK = 30
 BACKGROUND_COLOR = (255, 255, 255)
@@ -10,11 +12,6 @@ def creer_image_vide_de_taille(img):
     empty = Image.new('RGB', (img.shape[1], img.shape[0]), (0, 0, 0, 0))
     empty.save('images/empty.png')
     return None
-
-
-def is_black(pixel):
-    # TODO: définir le noir
-    pass
 
 
 # noinspection SpellCheckingInspection
@@ -38,7 +35,7 @@ def nettoyage_image(img):
     return empty
 
 
-def destruction_noir(image_list : list, n) -> list:
+def destruction_noir(image_list: list, n) -> list:
     """On reconnait les pixels noirs sur les n premières images du film,
     qu'on remplace par du blanc sur toutes les images consécutives (nettoyage du noir
     périphérique, présent avant éclatement du film)"""
@@ -69,12 +66,28 @@ def first_black(images_list: list) -> int:
     return -1
 
 
+def is_black(pixel):
+    """Approche : déterminer un pourcentage de noir de l'image, si celui est dépassé, on a le noir ?"""
+    # TODO: définir le noir
+    pass
+
+
+def read_vid(path, step=1):
+    vid = cv2.VideoCapture(path)
+    count = 1
+    success, image = vid.read()
+    while success:
+        cv2.imwrite("processed_images/image_%d.jpg" % count, image)
+        success, image = vid.read()
+        for i in range(step - 1):
+            success, image = vid.read()
+        count += 1
+    return count
+
+
 def main():
-    img = im3.imread('images/image.png')
-    imshow(img)
-    show()
-    imshow(nettoyage_image(img))
-    show()
+    video_path = "videos/1.mp4"
+    print(read_vid(video_path, 2))
     # TODO Finir le programme
 
 
