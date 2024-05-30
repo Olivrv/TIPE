@@ -41,7 +41,7 @@ def rgb(dif_marche):
     return r, g, b
 
 
-def plot(epaisseur_max, n=300):
+def plot(epaisseur_max=0.000005, n=300):
     couleurs = []
     for i in range(1, n):
         dif_marche = i * epaisseur_max / n
@@ -50,8 +50,10 @@ def plot(epaisseur_max, n=300):
 
     plt.title("Echelle des teintes de Newton")
     plt.ylabel("Différence de marche (m)")
+    ax = plt.gca()
+    ax.get_xaxis().set_visible(False)
     plt.show()
-plot(1)
+
 
 def couleur():
     pass
