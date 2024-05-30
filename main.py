@@ -13,8 +13,9 @@ def creer_image_vide_de_taille(img):
 
 
 def is_black(pixel):
-    # TODO
+    # TODO: définir le noir
     pass
+
 
 # noinspection SpellCheckingInspection
 def luminosite(pixel):
@@ -35,11 +36,6 @@ def nettoyage_image(img):
             else:
                 empty[i][j] = BACKGROUND_COLOR
     return empty
-
-
-def extraire_couleurs(img):
-    pass
-    # TODO
 
 
 def destruction_noir(image_list : list, n) -> list:
@@ -79,7 +75,7 @@ def main():
     show()
     imshow(nettoyage_image(img))
     show()
-    # TODO
+    # TODO Finir le programme
 
 
 main()

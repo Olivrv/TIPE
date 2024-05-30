@@ -3,9 +3,9 @@ import scipy.integrate as si
 import matplotlib.pyplot as plt
 
 
-def Eclairement(sigma, d):
-    return 1 - np.cos(2 * np.pi * d * sigma * (10 ** (-9)))
-
+"""def Eclairement(sigma, d):
+    return 1 - np.cos(2 * np.pi * d * sigma * (10 ** (-9)))"""
+Eclairement = lambda sigma, d: 1 - np.cos(2 * np.pi * d * sigma * (10 ** (-9)))
 
 def Eclairementbis(d):
     return si.quad(Eclairement, 1 / (4 * (10 ** (-7))), 1 / (7.5 * (10 ** (-7))), args=(d,))
