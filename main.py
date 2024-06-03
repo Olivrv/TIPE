@@ -4,8 +4,8 @@ from PIL import Image
 import cv2
 from newton_levy import couleur
 
-BLACK = 30
-BACKGROUND_COLOR = (255, 255, 255)
+BLACK = 100
+BACKGROUND_COLOR = (0, 0, 0)
 
 
 def creer_image_vide_de_taille(img):
@@ -25,17 +25,19 @@ def nettoyage_image(img):
     """On élimine les contours de l'image qui sont sombres (ie arrière-plan),
     on les remplace par la couleur BACKGROUND_COLOR."""
     h, l, _ = img.shape
+    creer_image_vide_de_taille(img)
     empty = im3.imread("images/empty.png")
     for i in range(h):
         for j in range(l):
             if luminosite(img[i][j]) > BLACK:
                 empty[i][j] = img[i][j]
+
             else:
                 empty[i][j] = BACKGROUND_COLOR
     return empty
 
 
-def destruction_noir(image_list: list, n) -> list:
+def destruction_noir(image_list: list, n: int) -> list:
     """On reconnait les pixels noirs sur les n premières images du film,
     qu'on remplace par du blanc sur toutes les images consécutives (nettoyage du noir
     périphérique, présent avant éclatement du film)"""
@@ -77,7 +79,7 @@ def read_vid(path, step=1):
     count = 1
     success, image = vid.read()
     while success:
-        cv2.imwrite("processed_images/image_%d.jpg" % count, image)
+        cv2.imwrite("processed_images/image_%d.png" % count, image)
         success, image = vid.read()
         for i in range(step - 1):
             success, image = vid.read()
@@ -86,10 +88,10 @@ def read_vid(path, step=1):
 
 
 def main():
-    video_path = "videos/1.mp4"
+    video_path = "videos/4bis.mp4"
     print(read_vid(video_path, 2))
     # TODO Finir le programme
 
 
-main()
-
+if __name__ == "__main__":
+    main()
