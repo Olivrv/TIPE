@@ -1,11 +1,13 @@
+import time
 import imageio.v3 as im3
 from matplotlib.pyplot import imshow, show
 from PIL import Image
 import cv2
-from newton_levy import couleur
+import numpy as np
 
-BLACK = 100
+BLACK = 400
 BACKGROUND_COLOR = (0, 0, 0)
+THRESHOLD = 100000  # pixels
 
 
 def creer_image_vide_de_taille(img):
@@ -37,60 +39,69 @@ def nettoyage_image(img):
     return empty
 
 
-def destruction_noir(image_list: list, n: int) -> list:
-    """On reconnait les pixels noirs sur les n premières images du film,
-    qu'on remplace par du blanc sur toutes les images consécutives (nettoyage du noir
-    périphérique, présent avant éclatement du film)"""
-    noirs = set()
-    for image in range(n):
-        img = image_list[image]
-        h, l, _ = img.shape
-        for i in range(h):
-            for j in range(l):
-                if is_black(img[i][j]):
-                    noirs.add((i, j))
-    for image in range(len(image_list)):
-        for (i, j) in noirs:
-            image_list[image][i][j] = BACKGROUND_COLOR
-    return image_list
+def destruction_noir(image_list_path: str, n: int):
+    """On reconnait les pixels noirs sur la première image, puis on les retire sur tous les n autres"""
+    start_image = image_list_path + "image_1.png"
+    start = cv2.imread(start_image)
+    alpha = np.sum(start, axis=-1) > BLACK
+    alpha = np.uint8(alpha * 255)
+    for i in range(n-1):
+        path = image_list_path + "image_" + str(i + 1) + ".png"
+        im = cv2.imread(path)
+        modified = np.dstack((im, alpha))
+        cv2.imwrite(path, modified)
+    return True
 
 
-def first_black(images_list: list) -> int:
-    """Dans une liste d'image de type im3, renvoie le premier indice où apparait une lame sombre"""
-    li = list(images_list)
-    for i in range(len(li)):
-        image = li[i]
-        h, l, _ = image.shape
-        for k in range(h):
-            for j in range(l):
-                if luminosite(image[k][j]) < BLACK:
-                    return i
-    return -1
+def first_black(images_list_path, n) -> int:
+    """Dans une liste d'image située en image_list_path, de forme image_n, avec n le numéro de l'image,
+     renvoie le premier indice où apparait une lame sombre"""
+    initial_black = np.count_nonzero(np.sum(cv2.imread(images_list_path + "image_1.png"), axis=-1) < BLACK)
+    for i in range(1, n-1):
+        image_path = images_list_path + "image_" + str(i) + ".png"
+        im = cv2.imread(image_path)
+        if is_black(im, initial_black):
+            return i
+    else:
+        return -1
 
 
-def is_black(pixel):
+def is_black(im, initial_black,threshold=THRESHOLD):
     """Approche : déterminer un pourcentage de noir de l'image, si celui est dépassé, on a le noir ?"""
-    # TODO: définir le noir
-    pass
+    n = np.sum(im, axis=-1) < BLACK
+    n = np.count_nonzero(n)
+    print(n - initial_black)
+    return n - initial_black > threshold
 
 
 def read_vid(path, step=1):
     vid = cv2.VideoCapture(path)
     count = 1
-    success, image = vid.read()
-    while success:
-        cv2.imwrite("processed_images/image_%d.png" % count, image)
+    step_count = 0
+    while vid.isOpened():
         success, image = vid.read()
-        for i in range(step - 1):
-            success, image = vid.read()
-        count += 1
+        if success:
+            cv2.imwrite('processed_images/image_%d.png' % count, image)
+            count += 1
+            step_count += step  # i.e. at 'step' fps, this advances one second
+            vid.set(cv2.CAP_PROP_POS_FRAMES, step_count)
+        else:
+            vid.release()
+            break
     return count
 
 
+# Combiner read_vid et destruction_noir
 def main():
-    video_path = "videos/4bis.mp4"
-    print(read_vid(video_path, 2))
-    # TODO Finir le programme
+    t = time.time()
+    video_path = "videos/5bis.mp4"
+    image_path = "processed_images/"
+    n = read_vid(video_path, 120)
+    print(n)
+    destruction_noir("processed_images/", n)
+    t_elapsed = time.time() - t
+    print("Done. Runtime: " + str(t_elapsed) + "s.")
+    print(first_black(image_path, n))
 
 
 if __name__ == "__main__":

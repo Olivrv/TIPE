@@ -2,6 +2,7 @@ import numpy as np
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
+# Longueurs d'onde
 VISIBLE = ((3.8 * (10 ** (-7))), (6.5 * (10 ** (-7))))
 BLEU = ((3.8 * (10 ** (-7))), (4.90 * (10 ** (-7))))
 VERT = ((4.90 * (10 ** (-7))), (5.7 * (10 ** (-7))))
