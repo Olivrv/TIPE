@@ -35,6 +35,7 @@ Troisième méthode, mélange des deux, on altère l'alpha chanel selon la lumin
 start = cv2.imread(imstart)
 end = cv2.imread(imend)
 
+print(end)
 alpha = np.sum(start, axis=-1) > 300
 n = np.count_nonzero(alpha)
 alpha = np.uint8(alpha * 255)
@@ -49,6 +50,11 @@ cv2.imwrite('images/resultEnd.png', en)
 s2 = cv2.imread('images/resultStart.png', cv2.IMREAD_GRAYSCALE)
 end_alpha = np.sum(end, axis=-1) > 300
 print(end_alpha)
+h, w = end_alpha.shape
+array = np.where(end_alpha == True)
+f1, f2 = array[0][0], array[1][0]
+e1, e2 = array[0][-1], array[1][-1]
+
 plt.imshow(end_alpha, interpolation='nearest')
 plt.show()
 n2 = np.count_nonzero(alpha)
