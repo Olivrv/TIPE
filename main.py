@@ -2,6 +2,7 @@ import time
 from newton_levy import couleur
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Paramètres à ajuster en fonction de la vidéo.
 BLACK = 350
@@ -75,28 +76,54 @@ def read_vid(path, step=1):
     return count
 
 
-def get_epaisseur(images_list_path: str, output_path: str, first_b: int, color: dict):
-    black = cv2.imread(images_list_path + "image" + str(first_b) + ".png")
-    h, w, _ = black.shape
-    found = dict()
+def get_epaisseur(images_list_path: str, output_path: str, first_b: int, color: dict, precision=2):
+    path = images_list_path + "image_" + str(first_b) + ".png"
+    black = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    h, w, d = black.shape
+    print(h * w)
+    counter = dict()
+    epaisseur = np.array([[-1 for _ in range(w)] for _ in range(h)])
+    c = 0
+    for i in range(1, h):
+        for j in range(0, w):
+            r, g, b, a = black[i][j]
+            if a == 0:
+                epaisseur[i][j] = -1
+            else:
+                t = int(r) + int(g) + int(b)
+                r, g, b = r / t, g / t, b / t
+                (r, g, b) = (round(r, precision), round(g, precision), round(b, precision))
+                if (r, g, b) in counter.keys():
+                    counter[(r, g, b)] += 1
+                else:
+                    counter[(r, g, b)] = 1
+                if ((r, g, b), counter[(r, g, b)]) in color:
+                    c += 1
+                    epaisseur[i][j] = color[((r, g, b), counter[(r, g, b)])]
+                else:
+                    """count = counter[(r, g, b)]
+                    (r, g, b) = (round(r, 1), round(g, 1), round(b, 1))
+                    epaisseur[i][j] = color[((r, g, b), count)]"""
+    plt.imshow(epaisseur, interpolation='nearest')
+    plt.show()
 
 
 # Combiner read_vid et destruction_noir
 def main():
     t = time.time()
-    video_path = "videos/5bis.mp4"
+    video_path = "videos/6.mp4"
     image_path = "processed_images/"
     output_path = "output_images"
-    n = read_vid(video_path, 120)
+    n = read_vid(video_path, 2)
     print(n)
     destruction_noir("processed_images/", n)
     t_elapsed = time.time() - t
     print("Done. Runtime: " + str(t_elapsed) + "s.")
     first = first_black(image_path, n)
+    print(first)
     color = couleur()
+    print(color)
     get_epaisseur(image_path, output_path, first, color)
-
-
 
 
 if __name__ == "__main__":
