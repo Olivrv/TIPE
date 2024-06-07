@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 # Paramètres à ajuster en fonction de la vidéo.
 BLACK = 350
 BACKGROUND_COLOR = (0, 0, 0)
-THRESHOLD = 70000  # pixels
+THRESHOLD = 5000  # pixels
+EPAISSEUR_MAX = 0.00007  # mètres
 
 
 def luminosite(pixel):
@@ -76,54 +77,85 @@ def read_vid(path, step=1):
     return count
 
 
-def get_epaisseur(images_list_path: str, output_path: str, first_b: int, color: dict, precision=2):
+def distance_euclide(a1, a2):
+    x, y, z = a1
+    x2, y2, z2 = a2
+    return np.sqrt((x - x2) ** 2 + (y - y2) ** 2 + (z - z2) ** 2)
+
+
+def closest_color(c, colors):
+    """Plus proche couleur dans colors de c dans l'espace en 3 dimensions des couleurs."""
+    r, g, b = c
+    l = [(color, distance_euclide((r, g, b), color)) for color in colors]
+    d = min(l, key=lambda x: x[1])
+    return d[0]
+
+
+def get_epaisseur(images_list_path: str, output_path: str, first_b: int, color: dict, distance_couleur=40):
     path = images_list_path + "image_" + str(first_b) + ".png"
     black = cv2.imread(path, cv2.IMREAD_UNCHANGED)
     h, w, d = black.shape
-    print(h * w)
+    colors = set(i[0] for i in color.keys())
+
+
     counter = dict()
-    epaisseur = np.array([[-1 for _ in range(w)] for _ in range(h)])
+    epaisseur = np.array([[0.0000001 for _ in range(w)] for _ in range(h)])
     c = 0
+    seen_rangee = set()
+    # Attention : i la hauteur, j l'abscisse
     for i in range(1, h):
         for j in range(0, w):
             r, g, b, a = black[i][j]
-            if a == 0:
-                epaisseur[i][j] = -1
+            if a == 0:  # Si le pixel est transparent, on l'ignore.
+                epaisseur[i][j] = -255
             else:
                 t = int(r) + int(g) + int(b)
-                r, g, b = r / t, g / t, b / t
-                (r, g, b) = (round(r, precision), round(g, precision), round(b, precision))
+                r, g, b = r / t, g / t, b / t  # On obtient les coefficients r, g, b du pixel
+                r, g, b = closest_color((r, g, b), colors)
+                intersect = [k for k in range(i - distance_couleur, i + distance_couleur + 1) if k in seen_rangee]
                 if (r, g, b) in counter.keys():
-                    counter[(r, g, b)] += 1
+                    if intersect == []:
+                        counter[(r, g, b)] += 1
+                        seen_rangee.add(i)
                 else:
                     counter[(r, g, b)] = 1
                 if ((r, g, b), counter[(r, g, b)]) in color:
                     c += 1
                     epaisseur[i][j] = color[((r, g, b), counter[(r, g, b)])]
                 else:
-                    """count = counter[(r, g, b)]
-                    (r, g, b) = (round(r, 1), round(g, 1), round(b, 1))
-                    epaisseur[i][j] = color[((r, g, b), count)]"""
-    plt.imshow(epaisseur, interpolation='nearest')
+                    if counter[(r, g, b)] > 3:  # Alors c'est du blanc sale
+                        epaisseur[i][j] = EPAISSEUR_MAX
+                        c += 1
+                    else:
+                        epaisseur[i][j] = 0
+    e_max = np.amax(epaisseur)
+    print(e_max)
+    grayscale = np.divide(epaisseur, e_max/255)
+    print(c/(h*w))
+    plt.imshow(grayscale, cmap='gray', vmin=-255, vmax=255)
+    cv2.imwrite((output_path + "image_" + str(first_b) + ".png"), grayscale)
+
     plt.show()
 
 
 # Combiner read_vid et destruction_noir
 def main():
     t = time.time()
-    video_path = "videos/6.mp4"
+    video_path = "videos/6bis.mp4"
     image_path = "processed_images/"
-    output_path = "output_images"
-    n = read_vid(video_path, 2)
+    output_path = "output_images/"
+    n = read_vid(video_path, 120)
     print(n)
     destruction_noir("processed_images/", n)
+
+    first = first_black(image_path, n)
+    print("First", first)
+    color = couleur()
+
+    get_epaisseur(image_path, output_path, first, color)
+
     t_elapsed = time.time() - t
     print("Done. Runtime: " + str(t_elapsed) + "s.")
-    first = first_black(image_path, n)
-    print(first)
-    color = couleur()
-    print(color)
-    get_epaisseur(image_path, output_path, first, color)
 
 
 if __name__ == "__main__":

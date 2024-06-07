@@ -56,7 +56,7 @@ def plot(epaisseur_max=0.000005, n=500):
     plt.show()
 
 
-def couleur(epaisseur=0.00001, n=1000, precision=2) -> dict:
+def couleur(epaisseur=0.0001, n=1000, precision=2) -> dict:
     """
     épaisseur : epaisseur maximal du film, ie jusqu'où on calcule
     n : nombre de valeurs entre 0 et épaisseur
