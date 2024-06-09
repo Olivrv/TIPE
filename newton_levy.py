@@ -63,6 +63,7 @@ def couleur(epaisseur=0.00001, n=500, precision=2, delta=0.5 * (10**-6)) -> dict
     précision : précision de la valeur de r, g, b, important pour que les couches multiples soient prises en compte.
     """
     color = dict()
+    color[((0, 0, 0), 1)] = 0
     vu = dict()
     previous_color = (0, 0, 0)
     for i in range(1, n):
