@@ -42,7 +42,7 @@ def rgb(dif_marche):
     return r, g, b
 
 
-def plot(epaisseur_max=0.000005, n=500):
+def plot(epaisseur_max=0.00001, n=500):
     couleurs = []
     for i in range(1, n):
         dif_marche = i * epaisseur_max / n
@@ -56,7 +56,7 @@ def plot(epaisseur_max=0.000005, n=500):
     plt.show()
 
 
-def couleur(epaisseur=0.0001, n=1000, precision=2) -> dict:
+def couleur(epaisseur=0.00001, n=500, precision=2, delta=0.5 * (10**-6)) -> dict:
     """
     épaisseur : epaisseur maximal du film, ie jusqu'où on calcule
     n : nombre de valeurs entre 0 et épaisseur
@@ -64,12 +64,14 @@ def couleur(epaisseur=0.0001, n=1000, precision=2) -> dict:
     """
     color = dict()
     vu = dict()
+    previous_color = (0, 0, 0)
     for i in range(1, n):
         dif_marche = i * epaisseur / n
         r, g, b = rgb(dif_marche)
         c = (round(r, precision), round(g, precision), round(b, precision))
         if c in vu.keys():
-            vu[c] += 1
+            if previous_color != c and abs(color[c, vu[c]] - dif_marche) > delta:
+                vu[c] += 1
         else:
             vu[c] = 1
         color[(c, vu[c])] = dif_marche
@@ -77,4 +79,6 @@ def couleur(epaisseur=0.0001, n=1000, precision=2) -> dict:
 
 
 if __name__ == "__main__":
+    plot()
     print(couleur())
+    print(max([i for _, i in couleur().keys()]))
