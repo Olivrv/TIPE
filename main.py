@@ -9,6 +9,7 @@ BLACK = 350
 BACKGROUND_COLOR = (0, 0, 0)
 THRESHOLD = 5000  # pixels
 EPAISSEUR_MAX = 0.00007  # mètres
+n = 1.4  # Indice de la pelliculle savonneuse
 
 
 def luminosite(pixel):
@@ -91,24 +92,32 @@ def closest_color(c, colors):
     return d[0]
 
 
-"""
-def get_epaisseur(images_list_path: str, output_path: str, first_b: int, color: dict, distance_couleur=50):
+def clean(epaisseur, j):
+    for i in range(0, 115):
+        epaisseur[i][j] = 0
+    for i in range(360, len(epaisseur)):
+        epaisseur[i][j] = 0
+    return epaisseur
+
+
+def get_epaisseur1(images_list_path: str, output_path: str, first_b: int, color: dict, distance_couleur=1):
+    n = 1.4  # Indice de la pelliculle savonneuse
     path = images_list_path + "image_" + str(first_b) + ".png"
     black = cv2.imread(path, cv2.IMREAD_UNCHANGED)
     h, w, d = black.shape
     colors = set(i[0] for i in color.keys())
 
-
     counter = dict()
-    epaisseur = np.array([[0.00000001 for _ in range(w)] for _ in range(h)])
+    epaisseur = np.array([[0.0000001 for _ in range(w)] for _ in range(h)])
     c = 0
     seen_rangee = set()
     # Attention : i la hauteur, j l'abscisse
-    for i in range(1, h):
+    for k in range(1, h):
+        i = h - k
         for j in range(0, w):
             r, g, b, a = black[i][j]
             if a == 0:  # Si le pixel est transparent, on l'ignore.
-                epaisseur[i][j] = -255
+                epaisseur[i][j] = 0
             else:
                 t = int(r) + int(g) + int(b)
                 r, g, b = r / t, g / t, b / t  # On obtient les coefficients r, g, b du pixel
@@ -122,29 +131,34 @@ def get_epaisseur(images_list_path: str, output_path: str, first_b: int, color: 
                     counter[(r, g, b)] = 1
                 if ((r, g, b), counter[(r, g, b)]) in color:
                     c += 1
-                    epaisseur[i][j] = color[((r, g, b), counter[(r, g, b)])]
+                    epaisseur[i][j] = color[((r, g, b), counter[(r, g, b)])]/2*n
                 else:
                     if counter[(r, g, b)] > 3:  # Alors c'est du blanc sale
-                        epaisseur[i][j] = EPAISSEUR_MAX
+                        epaisseur[i][j] = epaisseur[i-1][j]
                         c += 1
                     else:
-                        epaisseur[i][j] = -100
+                        epaisseur[i][j] = 0
     e_max = np.amax(epaisseur)
     print(e_max)
     grayscale = np.divide(epaisseur, e_max/255)
     print(c/(h*w))
-    plt.imshow(grayscale, cmap='gray', vmin=-255, vmax=255)
+    # plt.imshow(grayscale, cmap='gray', vmin=-255, vmax=255)
+    # clean(epaisseur, int(w/2))
+    start, end = 105, 500
+    plt.plot(range(start, end), [epaisseur[i][int(w/2)] for i in range(start, end)])
     cv2.imwrite((output_path + "image_" + str(first_b) + ".png"), grayscale)
 
     plt.show()
-"""
 
 
 def pixel_color(img, i, j, colors):
     r, g, b, a = img[i][j]
     if a == 0:
         return 0, 0, 0
-    t = r + g + b
+    try:
+        t = int(r) + int(g) + int(b)
+    except RuntimeWarning:
+        print(r, g, b, t)
     if t == 0:
         return 0, 0, 0
     else:
@@ -152,7 +166,7 @@ def pixel_color(img, i, j, colors):
         return closest_color((r, g, b), colors)
 
 
-def get_epaisseur(images_list_path: str, output_path: str, first_b: int, distance_couleur=10):
+def get_epaisseur(images_list_path: str, output_path: str, first_b: int, distance_couleur=40):
     path = images_list_path + "image_" + str(first_b) + ".png"
     black = cv2.imread(path, cv2.IMREAD_UNCHANGED)
     h, w, d = black.shape
@@ -164,35 +178,39 @@ def get_epaisseur(images_list_path: str, output_path: str, first_b: int, distanc
     epaisseur = np.array([[0.0000001 for _ in range(w)] for _ in range(h)])
     c = 0  # on veut compter le nombre de pixels auquels on a pu assigner une couleur
     counter = dict()
-    for i in range(1, h):
+    couleur_vues = np.array([[(0, 0, 0) for _ in range(w)] for _ in range(h)])
+    for k in range(1, h):
+        i = h - k
         for j in range(w):
             r, g, b, a = black[i][j]
             previous_epaisseur = epaisseur[i - 1][j]
-            if a == 0:
+            if a == 0:  # Si le pixel est transparent, on l'ignore.
                 epaisseur[i][j] = 0
             else:
                 r, g, b = pixel_color(black, i, j, colors)
+                couleur_vues[i][j] = (r, g, b)
                 if (r, g, b) == (0, 0, 0):
                     epaisseur[i][j] = 0
                 else:
                     if (r, g, b) in counter.keys():
                         previous_equal = [k for k in range(max(0, i - distance_couleur), i)
-                                          if pixel_color(black, k, j, colors) == (r, g, b)]
-                        if (r, g, b) == pixel_color(black, i - 1, j, colors):
+                                          if (couleur_vues[k][j] == (r, g, b)).all()]
+                        if ((r, g, b) == couleur_vues[i-1][j]).all():
                             epaisseur[i][j] = previous_epaisseur
                             c += 1
                         else:
                             if previous_equal == []:
-                                counter[(r, g, b)] += 1
                                 c += 1
                                 if ((r, g, b), counter[(r, g, b)]) in color.keys():
                                     epaisseur[i][j] = color[((r, g, b), counter[(r, g, b)])]
+                                    counter[(r, g, b)] += 1
                                 else:
-                                    epaisseur[i][j] = 0
+                                    # print(((r, g, b), counter[(r, g, b)]))
+                                    epaisseur[i][j] = previous_epaisseur
                             else:
-                                k = max(previous_equal)
+                                l = max(previous_equal)
                                 c += 1
-                                epaisseur[i][j] = epaisseur[k][j]
+                                epaisseur[i][j] = epaisseur[l][j]
                     else:
                         counter[(r, g, b)] = 1
                         if ((r, g, b), counter[(r, g, b)]) in color.keys():
@@ -205,10 +223,13 @@ def get_epaisseur(images_list_path: str, output_path: str, first_b: int, distanc
     print(counter)
     grayscale = np.divide(epaisseur, e_max)
     print(c / (h * w))
-    plt.imshow(grayscale, cmap='gray', vmin=0, vmax=e_max)
+    # plt.imshow(grayscale, cmap='gray', vmin=0, vmax=e_max)
+    start, end = 0, 400
+    plt.plot(range(start, end), [epaisseur[end - i][int(w / 2)] for i in range(0, end - start)])
     cv2.imwrite((output_path + "image_" + str(first_b) + ".png"), grayscale)
 
     plt.show()
+
 
 # Combiner read_vid et destruction_noir
 def main():
@@ -221,8 +242,8 @@ def main():
     destruction_noir("processed_images/", n)
     first = first_black(image_path, n)
     print("First", first)
-
-    get_epaisseur(image_path, output_path, first)
+    color = couleur()
+    get_epaisseur1(image_path, output_path, first, color)
 
     t_elapsed = time.time() - t
     print("Done. Runtime: " + str(t_elapsed) + "s.")

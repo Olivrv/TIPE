@@ -1,10 +1,12 @@
+import math
+
 import numpy as np
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
 # Longueurs d'onde
-VISIBLE = ((3.8 * (10 ** (-7))), (6.5 * (10 ** (-7))))
-BLEU = ((3.8 * (10 ** (-7))), (4.90 * (10 ** (-7))))
+VISIBLE = ((3.6 * (10 ** (-7))), (6.5 * (10 ** (-7))))
+BLEU = ((3.6 * (10 ** (-7))), (4.90 * (10 ** (-7))))
 VERT = ((4.90 * (10 ** (-7))), (5.7 * (10 ** (-7))))
 ROUGE = ((5.7 * (10 ** (-7))), (6.5 * (10 ** (-7))))
 
@@ -42,7 +44,7 @@ def rgb(dif_marche):
     return r, g, b
 
 
-def plot(epaisseur_max=0.00001, n=500):
+def plot(epaisseur_max=0.000002, n=500):
     couleurs = []
     for i in range(1, n):
         dif_marche = i * epaisseur_max / n
@@ -56,7 +58,7 @@ def plot(epaisseur_max=0.00001, n=500):
     plt.show()
 
 
-def couleur(epaisseur=0.00001, n=500, precision=2, delta=0.5 * (10**-6)) -> dict:
+def couleur(epaisseur=0.000008, n=500, precision=2, delta=0) -> dict:
     """
     épaisseur : epaisseur maximal du film, ie jusqu'où on calcule
     n : nombre de valeurs entre 0 et épaisseur
@@ -71,10 +73,12 @@ def couleur(epaisseur=0.00001, n=500, precision=2, delta=0.5 * (10**-6)) -> dict
         r, g, b = rgb(dif_marche)
         c = (round(r, precision), round(g, precision), round(b, precision))
         if c in vu.keys():
-            if previous_color != c and abs(color[c, vu[c]] - dif_marche) > delta:
+            if previous_color != c:
                 vu[c] += 1
+                previous_color = c
         else:
             vu[c] = 1
+            previous_color = c
         color[(c, vu[c])] = dif_marche
     return color
 
