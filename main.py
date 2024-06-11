@@ -155,10 +155,7 @@ def pixel_color(img, i, j, colors):
     r, g, b, a = img[i][j]
     if a == 0:
         return 0, 0, 0
-    try:
-        t = int(r) + int(g) + int(b)
-    except RuntimeWarning:
-        print(r, g, b, t)
+    t = int(r) + int(g) + int(b)
     if t == 0:
         return 0, 0, 0
     else:
